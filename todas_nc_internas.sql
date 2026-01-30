@@ -1,0 +1,5 @@
+SELECT
+
+FROM
+ORIN T0
+INNER JOIN RIN1 T1 ON T0."DocEntry" = T1."Doc

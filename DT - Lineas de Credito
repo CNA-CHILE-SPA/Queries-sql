@@ -1,0 +1,8 @@
+SELECT
+  T0."CardCode" AS "Código Cliente",
+  T0."LicTradNum" AS "RUT Cliente",
+  T0."CardName" AS "Razón Social",
+  T0."U_EstadoLinea" AS "Estado",
+  T0."U_Cobertura" AS "Cobertura"
+FROM
+  OCRD T0

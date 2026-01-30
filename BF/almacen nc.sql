@@ -1,0 +1,1 @@
+SELECT $[$38.24.0] FROM DUMMY;
