@@ -14,11 +14,11 @@ SELECT
     T1."Dscription",
     T1."Quantity",
     T1."Price",
-    T1."TotalSumSy" AS "Monto Neto Línea",
+    T1."LineTotal" AS "Monto Neto Línea USD",
     T1."WhsCode",
     T0."DocCur",
     T0."DocRate",
-    T0."DocTotalSy" AS "Total Documento"
+    T0."DocTotal" AS "Total Documento"
 FROM
     OINV T0
     INNER JOIN INV1 T1 ON T0."DocEntry" = T1."DocEntry"
