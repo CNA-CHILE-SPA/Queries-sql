@@ -1788,35 +1788,8 @@ END IF;
 
 
 
-IF :object_type = '17'
-AND (
-    :transaction_type = 'A'
-    OR :transaction_type = 'U'
-) THEN CONT := 0;
-
-SELECT
-    COUNT(*) INTO CONT
-FROM
-    ORDR T0
-    INNER JOIN RDR1 T1 ON T1."DocEntry" = T0."DocEntry"
-WHERE
-    T0."DocEntry" = :list_of_cols_val_tab_del
-    AND T1."ItemCode" IN ('MGM291420', 'MGL280027', 'MGM291494', 'MGM291495', 'MGM291496', 'MGM291366', 'MGM291368', 'MGM291501', 'MGM291395', 'MGM291502', 'MGM291371', 'MGM291520', 'MGM291451', 'MGM291427', 'MGM291239', 'MGM291247', 'MGM291248', 'MGM291252','MGM291254', 'MGM291259', 'MGM291258', 'MGM291260', 'MGM291265', 'MGM291268', 'MGM291269', 'MGM291279', 'MGM291240', 'MGM291280', 'MGM291278', 'MGM291282', 'MGM291286', 'MGM291283', 'MGM291321', 'MGM291291', 'MGM291292', 'MGM291293', 'MGM291262', 'MGM291372', 'MGM291300', 'MGM291301', 'MGM291302', 'MGM291303', 'MGM291306', 'MGM291307', 'MGM291309', 'MGM291308', 'MGM291310', 'MGM291263', 'MGM291253', 'MGM291270', 'MGM291288', 'MGM291257', 'MGM291313', 'MGM291314', 'MGM291317', 'MGM291318', 'MGM291251', 'MGM291319', 'MGM291320', 'MGM291287', 'MGM291324', 'MGM291329', 'MGM291330', 'MGM291333', 'MGM291335', 'MGM291336', 'MGM291337', 'MGL280028', 'MGM291340', 'MGM291343', 'MGM291344', 'MGM291348', 'MGM291351', 'MGM291353', 'MGM291354', 'MGM291356', 'MGM291357', 'MGM291358', 'MGM291359', 'MGM291374', 'MGM291375', 'MGM291376', 'MGM291380', 'MGM291381', 'MGM291384', 'MGM291389', 'MGM291390', 'MGM291393', 'MGM291396', 'MGM291398', 'MGM291399', 'MGM291400', 'MGM291401', 'MGM291402', 'MGM291403', 'MGM291406', 'MGM291411', 'MGM291416', 'MGM291417', 'MGM291418', 'MGM291424', 'MGM291426', 'MGM291433', 'MGM291434', 'MGM291435', 'MGM291439', 'MGM291438', 'MGM291447', 'MGM291448', 'MGM291458', 'MGM291462', 'MGM291463', 'MGM291464', 'MGM291466', 'MGM291467', 'MGM291469', 'MGM291470', 'MGM291471', 'MGM291476', 'MGM291477', 'MGM291479', 'MGM291480', 'MGM291481', 'MGM291482', 'MGM291483', 'MGM291484', 'MGM291485', 'MGM291486', 'MGM291487', 'MGM291488', 'MGM291489', 'MGM291490', 'MGM291491', 'MGM291492', 'MGM291512', 'MGM291513', 'MGM291515', 'MGM291518','MGM291524');
-
-IF CONT > 0 THEN error := 87;
-
-error_message := 'En estos momentos no es posible generar ordenes de ventas con este producto';
-
-END IF;
-
-END IF;
-
-
-
-
 
 --Entrega de venta
-
 --Comentarios es obligatorio
 IF :object_type = '15' THEN 
     IF :transaction_type = 'A' OR :transaction_type = 'U' THEN 
@@ -2015,120 +1988,79 @@ END IF;
 --- Campo Mueve Stock obligatorio en NC de clientes
 ---- Nicolás Tapia 24-02-2026
 
--- IF :object_type = '14'
--- AND (
---     :transaction_type = 'A'
---     OR :transaction_type = 'U'
--- ) THEN IF EXISTS (
---     SELECT
---         1
---     FROM
---         ORIN T0
---     WHERE
---         T0."DocEntry" = :list_of_cols_val_tab_del
---         AND (
---             T0."U_MOV_STOCK" IS NULL
---             OR T0."U_MOV_STOCK" = ''
---         )
--- ) THEN error := 10001;
-
--- error_message := 'El campo Mueve Stock es obligatorio para la Nota de Crédito.';
-
--- END IF;
-
--- END IF;
-
-
-
--- Validación de NC en proceso de aprobación vinculada a la misma guía de despacho
--- NICOLAS TAPIA 16-03-2026
-IF :object_type = '15'
+IF :object_type = '14'
 AND (
     :transaction_type = 'A'
     OR :transaction_type = 'U'
-)
-AND (:error = 0) THEN DECLARE v_NC_EnAutorizacion INT := 0;
+) THEN IF EXISTS (
+    SELECT
+        1
+    FROM
+        ORIN T0
+    WHERE
+        T0."DocEntry" = :list_of_cols_val_tab_del
+        AND (
+            T0."U_MOV_STOCK" IS NULL
+            OR T0."U_MOV_STOCK" = ''
+        )
+) THEN error := 10001;
 
-DECLARE v_DocEntry INT := CAST(:list_of_cols_val_tab_del AS INT);
-
--- PASO 1: Partir desde OWDD (tabla de flujos en aprobación)
--- PASO 2: Unir OWDD con ODRF usando DraftEntry
--- PASO 3: Unir ODRF con DRF1 usando DocEntry para obtener líneas
--- PASO 4: Unir DLN1 de la guía actual para obtener su BaseRef
--- PASO 5: Filtrar comparando BaseRef de DRF1 (NC) con BaseRef de DLN1 (Guía)
-SELECT
-    COUNT(*) INTO v_NC_EnAutorizacion
-FROM
-    OWDD T0 -- PASO 1: Flujos en aprobación
-    INNER JOIN ODRF D ON T0."DraftEntry" = D."DocEntry" -- PASO 2: Documentos borrador
-    INNER JOIN DRF1 T1 ON D."DocEntry" = T1."DocEntry" -- PASO 3: Líneas NC borrador
-    INNER JOIN DLN1 T2 ON T2."DocEntry" = v_DocEntry -- PASO 4: Líneas guía actual
-WHERE
-    T0."Status" = 'W' -- PASO 1: Solo en proceso
-    AND T0."ObjType" = '14' -- Nota de Crédito
-    AND T1."BaseType" = 13 -- NC vinculada a factura
-    AND T1."BaseRef" = T2."BaseRef";
-
--- PASO 5: Mismo DocNum
-IF v_NC_EnAutorizacion > 0 THEN error := 702;
-
-error_message := 'No se puede emitir la Guía de Despacho. La factura tiene una Nota de crédito en proceso de aprobación';
+error_message := 'El campo Mueve Stock es obligatorio para la Nota de Crédito.';
 
 END IF;
 
 END IF;
-
 
 
 ---- Motivos con y sin devolucion de stock
 ----- Nicolás Tapia 06-01-2026
 
 
--- IF :object_type = '14'
--- AND (
---     :transaction_type = 'A'
---     OR :transaction_type = 'U'
--- ) THEN
--- /* Caso 1: Motivos con devolución -> todas las líneas deben ser 'N' */
--- IF EXISTS (
---     SELECT
---         1
---     FROM
---         "RIN1" T1
---         INNER JOIN "ORIN" T0 ON T0."DocEntry" = T1."DocEntry"
---     WHERE
---         T1."DocEntry" = :list_of_cols_val_tab_del
---         AND IFNULL(T0."U_MOTIVO_NCND", 0) IN (1, 7, 8, 16)
---         AND T1."NoInvtryMv" <> 'N'
---         AND T1."ItemCode" NOT LIKE 'NC%' -- �� exclusión
--- ) THEN error := 1;
+IF :object_type = '14'
+AND (
+    :transaction_type = 'A'
+    OR :transaction_type = 'U'
+) THEN
+/* Caso 1: Motivos con devolución -> todas las líneas deben ser 'N' */
+IF EXISTS (
+    SELECT
+        1
+    FROM
+        "RIN1" T1
+        INNER JOIN "ORIN" T0 ON T0."DocEntry" = T1."DocEntry"
+    WHERE
+        T1."DocEntry" = :list_of_cols_val_tab_del
+        AND IFNULL(T0."U_MOTIVO_NCND", 0) IN (1, 7, 8, 16)
+        AND T1."NoInvtryMv" <> 'N'
+        AND T1."ItemCode" NOT LIKE 'NC%' -- �� exclusión
+) THEN error := 1;
 
--- error_message := 'Para este motivo de nota de crédito, todas las líneas deben tener devolución de cantidad y ser aprobadas por gerencia de logística';
+error_message := 'Para este motivo de nota de crédito, todas las líneas deben tener devolución de cantidad y ser aprobadas por gerencia de logística';
 
--- END IF;
+END IF;
 
--- -- Nicolás Tapia 14-01-26
+-- Nicolás Tapia 14-01-26
 
--- /* Caso 2: Motivos sin devolución -> todas las líneas deben ser 'Y' */
--- IF EXISTS (
---     SELECT
---         1
---     FROM
---         "RIN1" T1
---         INNER JOIN "ORIN" T0 ON T0."DocEntry" = T1."DocEntry"
---     WHERE
---         T1."DocEntry" = :list_of_cols_val_tab_del
---         AND IFNULL(T0."U_MOTIVO_NCND", 0) IN (6, 9, 10, 12, 13)
---         AND T1."NoInvtryMv" <> 'Y'
---         AND T1."ItemCode" NOT LIKE 'NC%' -- �� exclusión
--- ) THEN error := 1;
+/* Caso 2: Motivos sin devolución -> todas las líneas deben ser 'Y' */
+IF EXISTS (
+    SELECT
+        1
+    FROM
+        "RIN1" T1
+        INNER JOIN "ORIN" T0 ON T0."DocEntry" = T1."DocEntry"
+    WHERE
+        T1."DocEntry" = :list_of_cols_val_tab_del
+        AND IFNULL(T0."U_MOTIVO_NCND", 0) IN (6, 9, 10, 12, 13)
+        AND T1."NoInvtryMv" <> 'Y'
+        AND T1."ItemCode" NOT LIKE 'NC%' -- �� exclusión
+) THEN error := 1;
 
--- error_message := 'Para este motivo de nota de crédito, no debe existir devolución de cantidad en las líneas';
+error_message := 'Para este motivo de nota de crédito, no debe existir devolución de cantidad en las líneas';
 
--- END IF;
+END IF;
 
 
--- END IF;
+END IF;
 
 
 
@@ -2196,33 +2128,6 @@ END IF;
 END IF;
 
 
-
--- NC de clientes no pueden ser hacia bodegas auxiliares
--- Nicolás Tapia 23-03-26
-
-
-IF :object_type = '14'
-AND (
-    :transaction_type = 'A'
-    OR :transaction_type = 'U'
-) THEN DECLARE v_Cont INT := 0;
-
-SELECT
-    COUNT(*) INTO v_Cont
-FROM
-    ORIN T0
-    INNER JOIN OWHS T1 ON T1."WhsCode" = T0."U_BOD_DOC"
-WHERE
-    T0."DocEntry" = :list_of_cols_val_tab_del
-    AND T1."U_TP_ALMACEN" = 'AUXILIAR';
-
-IF v_Cont > 0 THEN error := 87;
-
-error_message := 'No se pueden hacer NC hacia bodegas AUXILIAR.';
-
-END IF;
-
-END IF;
 
 
 ------------------------------------ Invnetario----------------------------------------------------------------------------------

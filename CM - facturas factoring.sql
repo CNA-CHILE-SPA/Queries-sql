@@ -19,7 +19,7 @@ SELECT
   -- Cantidad entregada
   COALESCE(SUM(I."Quantity") - SUM(I."OpenQty"), 0) AS "Entregado",
   -- Cantidad pendiente de entrega
-  COALESCE(SUM(I."OpenQty"), 0) AS "PendienteEntrega",
+  COALESCE(SUM(I."OpenCreQty"), 0) AS "PendienteEntrega",
   F."PaidToDate" AS "Total Pagado",
   NC."FolioNum" as "Nota de Crédito Asociada"
 FROM

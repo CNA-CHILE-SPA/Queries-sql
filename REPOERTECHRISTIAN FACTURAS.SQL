@@ -45,7 +45,3 @@ FROM
 
 
 
-SELECT
-* from OPCH
-WHERE OPCH."CardCode" = 'PN91577000-2'
-limit 5

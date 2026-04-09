@@ -1,0 +1,6 @@
+SELECT  
+T0."ItemCode",
+T0."Dscription",
+T0."U_CLASIFICACION"
+FROM 
+OITM T0

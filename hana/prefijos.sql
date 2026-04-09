@@ -1,0 +1,6 @@
+SELECT
+    T0."ItemCode",
+    T1."Name"
+FROM
+    OITM T0
+    INNER JOIN "@PREART" T1 ON T0."U_CLASIFICACION" = T1."Code"

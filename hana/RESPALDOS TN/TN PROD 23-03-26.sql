@@ -1,4 +1,4 @@
-ALTER PROCEDURE SBO_SP_TransactionNotification
+CREATE PROCEDURE SBO_SP_TransactionNotification
 (
 	in object_type nvarchar(100), 				-- SBO Object Type
 	in transaction_type nchar(1),			-- [A]dd, [U]pdate, [D]elete, [C]ancel, C[L]ose
@@ -2015,28 +2015,28 @@ END IF;
 --- Campo Mueve Stock obligatorio en NC de clientes
 ---- Nicolás Tapia 24-02-2026
 
--- IF :object_type = '14'
--- AND (
---     :transaction_type = 'A'
---     OR :transaction_type = 'U'
--- ) THEN IF EXISTS (
---     SELECT
---         1
---     FROM
---         ORIN T0
---     WHERE
---         T0."DocEntry" = :list_of_cols_val_tab_del
---         AND (
---             T0."U_MOV_STOCK" IS NULL
---             OR T0."U_MOV_STOCK" = ''
---         )
--- ) THEN error := 10001;
+IF :object_type = '14'
+AND (
+    :transaction_type = 'A'
+    OR :transaction_type = 'U'
+) THEN IF EXISTS (
+    SELECT
+        1
+    FROM
+        ORIN T0
+    WHERE
+        T0."DocEntry" = :list_of_cols_val_tab_del
+        AND (
+            T0."U_MOV_STOCK" IS NULL
+            OR T0."U_MOV_STOCK" = ''
+        )
+) THEN error := 10001;
 
--- error_message := 'El campo Mueve Stock es obligatorio para la Nota de Crédito.';
+error_message := 'El campo Mueve Stock es obligatorio para la Nota de Crédito.';
 
--- END IF;
+END IF;
 
--- END IF;
+END IF;
 
 
 
@@ -2196,33 +2196,6 @@ END IF;
 END IF;
 
 
-
--- NC de clientes no pueden ser hacia bodegas auxiliares
--- Nicolás Tapia 23-03-26
-
-
-IF :object_type = '14'
-AND (
-    :transaction_type = 'A'
-    OR :transaction_type = 'U'
-) THEN DECLARE v_Cont INT := 0;
-
-SELECT
-    COUNT(*) INTO v_Cont
-FROM
-    ORIN T0
-    INNER JOIN OWHS T1 ON T1."WhsCode" = T0."U_BOD_DOC"
-WHERE
-    T0."DocEntry" = :list_of_cols_val_tab_del
-    AND T1."U_TP_ALMACEN" = 'AUXILIAR';
-
-IF v_Cont > 0 THEN error := 87;
-
-error_message := 'No se pueden hacer NC hacia bodegas AUXILIAR.';
-
-END IF;
-
-END IF;
 
 
 ------------------------------------ Invnetario----------------------------------------------------------------------------------
